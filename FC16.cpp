@@ -1,10 +1,11 @@
 #include "FC16.h"
 #include "FC16_Font.h"
 
-FC16::FC16(int csPin, int numDevices)
+FC16::FC16(int csPin, int numDevices, bool addressingDisplaysBackward)
 	: _lc(csPin, numDevices) {
 	_maxDevices = _lc.getDeviceCount();
 	_maxColumns = _maxDevices * 8;
+   _addressingDisplaysBackward = addressingDisplaysBackward;
 }
 
 void FC16::shutdown(bool status) {
@@ -33,7 +34,12 @@ void FC16::setColumn(int col, byte value) {
 	if (col < 0) col = 0;
 	if (col >= _maxColumns) col = _maxColumns - 1;
 
-	int addr = _maxDevices - 1 - col / 8;
+   int addr;
+   if(_addressingDisplaysBackward)
+	   addr = _maxDevices - 1 - col / 8;
+   else
+      addr = col / 8;
+
 	int phyCol = col % 8;
 
 	_lc.setColumn(addr, phyCol, reverseBits(value));
@@ -45,8 +51,13 @@ void FC16::setLed(int row, int col, bool state) {
 	if (row > 7) row = 7;
 	if (col < 0) col = 0;
 	if (col >= _maxColumns) col = _maxColumns - 1;
+   
+   int addr;
+   if(_addressingDisplaysBackward)
+      addr = _maxDevices - 1 - col / 8;
+   else
+      addr = col / 8;
 
-	int addr = _maxDevices - 1 - col / 8;
 	int phyCol = col % 8;
 
 	_lc.setLed(addr, row, phyCol, state);
@@ -180,7 +191,10 @@ bool FC16::update() {
 			}
 
 			// Display row
-			_lc.setRow(addr, row, outputByte);
+			if(_addressingDisplaysBackward)
+            _lc.setRow(addr, row, outputByte);
+         else
+            _lc.setRow(_maxDevices - 1 - addr, row, outputByte);
 
 			// If this is not the last row, roll back advancement, if it is, leave the counters advanced.
 			if (row != 7) {

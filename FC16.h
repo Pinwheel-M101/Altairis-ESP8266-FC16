@@ -23,14 +23,18 @@ private:
 	int _curCharBit = 0;
 	bool _isScrolling = false;
 	int _updateCount = 0;
+   bool _addressingDisplaysBackward;
 
 	byte reverseBits(byte b);
 
 	void shutdown(bool status);
 
 public:
-
-	FC16(int csPin, int numDevices = 1);
+   /**
+     addressingDisplaysBackward = true  => address 0 is last 8x8 display matrix block (one of the type matrix display module)
+     addressingDisplaysBackward = false => address 0 is first 8x8 display matrix block (second of the type matrix display module)
+   */
+	FC16(int csPin, int numDevices = 1, bool addressingDisplaysBackward = true);
 
 	void begin();
 
